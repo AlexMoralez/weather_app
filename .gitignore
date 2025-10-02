@@ -118,3 +118,9 @@ jspm_packages/
 *.swp
 *.swo
 *~
+
+# AI Assistant Instructions (keep local only)
+.claude/
+.github/copilot-instructions.md
+*claude*
+*copilot-instructions*
