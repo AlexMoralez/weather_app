@@ -1,0 +1,81 @@
+<div class="search-container">
+  <mat-form-field class="search-field" appearance="outline">
+    <mat-label>Enter city name</mat-label>
+    <input
+      matInput
+      [formControl]="searchControl"
+      placeholder="e.g., London, New York"
+      (keyup.enter)="onSearch()"
+      [matAutocomplete]="auto"
+    />
+    <button
+      mat-icon-button
+      matSuffix
+      [disabled]="searchControl.invalid || isSearching()"
+      (click)="onSearch()"
+      type="button"
+    >
+      <mat-icon>search</mat-icon>
+    </button>
+    <mat-error *ngIf="searchControl.hasError('required')">
+      City name is required
+    </mat-error>
+    <mat-error *ngIf="searchControl.hasError('minlength')">
+      City name must be at least 2 characters long
+    </mat-error>
+    <mat-error *ngIf="searchControl.hasError('invalidCityName')">
+      Please enter a valid city name
+    </mat-error>
+  </mat-form-field>
+
+  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onFavoriteSelected($event.option.value)">
+    @for (option of filteredOptions(); track option.city) {
+      <mat-option [value]="option.city" class="city-autocomplete-option">
+        <div class="option-content">
+          @if (isFavorite(option.city)) {
+            <mat-icon class="favorite-icon">favorite</mat-icon>
+          } @else {
+            <mat-icon class="city-icon">location_city</mat-icon>
+          }
+          <span class="city-option">{{ option.city }}</span>
+          @if (option.country) {
+            <span class="country-code">{{ option.country }}</span>
+          }
+        </div>
+        @if (!isFavorite(option.city)) {
+          <button
+            mat-icon-button
+            class="add-favorite-btn"
+            (click)="addToFavorites($event, option.city)"
+            matTooltip="Add to favorites"
+matTooltipPosition="after"
+          >
+            <mat-icon>favorite_border</mat-icon>
+          </button>
+        }
+      </mat-option>
+    }
+    @if (filteredOptions().length === 0 && searchControl.value && searchControl.value.length >= 2) {
+      <mat-option disabled>
+        <span class="no-results">No cities found...</span>
+      </mat-option>
+    }
+  </mat-autocomplete>
+
+  @if (favorites().length > 0) {
+    <div class="favorites-section">
+      <h3>Favorite Cities</h3>
+      <mat-chip-set>
+        @for (favorite of favorites(); track favorite) {
+          <mat-chip
+            (click)="onFavoriteSelected(favorite)"
+            class="favorite-chip"
+          >
+            {{ favorite }}
+            <mat-icon matChipRemove (click)="removeFavorite($event, favorite)">cancel</mat-icon>
+          </mat-chip>
+        }
+      </mat-chip-set>
+    </div>
+  }
+</div>
