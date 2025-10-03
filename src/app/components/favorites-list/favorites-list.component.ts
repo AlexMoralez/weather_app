@@ -139,9 +139,6 @@ export class FavoritesListComponent {
 
   removeFavorite(cityName: string): void {
     this.favoritesService.removeFavorite(cityName);
-    this.favorites.update(current =>
-      current.filter(favorite => favorite.cityName !== cityName)
-    );
   }
 
   selectCity(cityName: string): void {
