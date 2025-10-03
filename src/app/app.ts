@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -38,7 +39,6 @@ import { WeatherService } from './services/weather.service';
 
       <main class="main-content">
         @if (!hasApiKey()) {
-          <!-- API Key Setup -->
           <app-api-key-setup (apiKeySubmitted)="onApiKeySubmitted($event)" />
         } @else {
           <!-- Weather Application -->
@@ -185,13 +185,36 @@ import { WeatherService } from './services/weather.service';
 export class App {
   private readonly weatherService = inject(WeatherService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
 
   // State signals
   hasApiKey = signal(false);
-  isLoading = signal(false);
-  errorMessage = signal<string | null>(null);
   currentWeather = signal<WeatherData | null>(null);
   forecast = signal<ForecastData[] | null>(null);
+
+  // Convert observables to signals for better performance
+  isLoading = toSignal(this.weatherService.loading$, { initialValue: false });
+  errorMessage = toSignal(this.weatherService.error$, { initialValue: null });
+
+  // Create a method that uses takeUntilDestroyed in the injection context
+  private searchCity = (cityName: string) => {
+    return this.weatherService.getWeatherData(cityName)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ weather, forecast }) => {
+          this.currentWeather.set(weather);
+          this.forecast.set(forecast);
+
+          this.snackBar.open(`Weather data loaded for ${weather.cityName}`, 'Close', {
+            duration: 2000,
+            verticalPosition: 'top'
+          });
+        },
+        error: () => {
+          // Error handling is done in the service
+        }
+      });
+  };
 
   constructor() {
     // Check if API key exists in localStorage
@@ -200,15 +223,6 @@ export class App {
       this.weatherService.setApiKey(savedApiKey);
       this.hasApiKey.set(true);
     }
-
-    // Subscribe to weather service state
-    this.weatherService.loading$.subscribe(loading => {
-      this.isLoading.set(loading);
-    });
-
-    this.weatherService.error$.subscribe(error => {
-      this.errorMessage.set(error);
-    });
   }
 
   onApiKeySubmitted(apiKey: string): void {
@@ -230,24 +244,12 @@ export class App {
   }
 
   onCitySearch(cityName: string): void {
-    this.errorMessage.set(null);
+    // Clear previous data
     this.currentWeather.set(null);
     this.forecast.set(null);
 
-    this.weatherService.getWeatherData(cityName).subscribe({
-      next: ({ weather, forecast }) => {
-        this.currentWeather.set(weather);
-        this.forecast.set(forecast);
-
-        this.snackBar.open(`Weather data loaded for ${weather.cityName}`, 'Close', {
-          duration: 2000,
-          verticalPosition: 'top'
-        });
-      },
-      error: () => {
-        // Error handling is done in the service
-      }
-    });
+    // Use the helper method that has access to injection context
+    this.searchCity(cityName);
   }
 
   onFavoriteCitySelected(cityName: string): void {
@@ -260,7 +262,6 @@ export class App {
     this.hasApiKey.set(false);
     this.currentWeather.set(null);
     this.forecast.set(null);
-    this.errorMessage.set(null);
     this.weatherService.clearCache();
 
     this.snackBar.open('API key cleared', 'Close', {

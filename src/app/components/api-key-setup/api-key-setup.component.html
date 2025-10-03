@@ -1,0 +1,77 @@
+<div class="setup-container">
+  <mat-card class="setup-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>key</mat-icon>
+        API Key Configuration
+      </mat-card-title>
+      <mat-card-subtitle>
+        Enter your OpenWeatherMap API key to start using the weather app
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="instructions">
+        <p>To get your free API key:</p>
+        <ol>
+          <li>Visit <a href="https://openweathermap.org/api" target="_blank" rel="noopener">OpenWeatherMap</a></li>
+          <li>Sign up for a free account</li>
+          <li>Go to "My API keys" in your account</li>
+          <li>Generate a new API key if needed</li>
+          <li>Copy your API key (32 characters) and paste it below</li>
+          <li><strong>Important:</strong> New API keys can take up to 2 hours to activate!</li>
+        </ol>
+      </div>
+
+      <mat-form-field class="api-key-field" appearance="outline">
+        <mat-label>OpenWeatherMap API Key</mat-label>
+        <input
+          matInput
+          [type]="showPassword() ? 'text' : 'password'"
+          [formControl]="apiKeyControl"
+          placeholder="Enter your API key"
+          (keyup.enter)="onSubmit()"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          (click)="togglePasswordVisibility()"
+          type="button"
+          [attr.aria-label]="showPassword() ? 'Hide API key' : 'Show API key'">
+          <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+
+        @if (apiKeyControl.hasError('required')) {
+          <mat-error>API key is required</mat-error>
+        }
+        @if (apiKeyControl.hasError('minlength')) {
+          <mat-error>API key must be at least 10 characters long</mat-error>
+        }
+        @if (apiKeyControl.hasError('tooShort')) {
+          <mat-error>API key must be at least 16 characters long</mat-error>
+        }
+        @if (apiKeyControl.hasError('tooLong')) {
+          <mat-error>API key is too long (maximum 64 characters)</mat-error>
+        }
+        @if (apiKeyControl.hasError('invalidFormat')) {
+          <mat-error>{{ apiKeyControl.getError('invalidFormat')?.message || 'Invalid API key format' }}</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="note">
+        <mat-icon>info</mat-icon>
+        <span>Your API key is stored locally and never sent to our servers.</span>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="isSubmitDisabled()"
+        (click)="onSubmit()">
+        Save API Key
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

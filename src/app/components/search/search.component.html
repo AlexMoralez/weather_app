@@ -17,15 +17,21 @@
     >
       <mat-icon>search</mat-icon>
     </button>
-    <mat-error *ngIf="searchControl.hasError('required')">
-      City name is required
-    </mat-error>
-    <mat-error *ngIf="searchControl.hasError('minlength')">
-      City name must be at least 2 characters long
-    </mat-error>
-    <mat-error *ngIf="searchControl.hasError('invalidCityName')">
-      Please enter a valid city name
-    </mat-error>
+    @if (searchControl.hasError('required')) {
+      <mat-error>
+        City name is required
+      </mat-error>
+    }
+    @if (searchControl.hasError('minlength')) {
+      <mat-error>
+        City name must be at least 2 characters long
+      </mat-error>
+    }
+    @if (searchControl.hasError('invalidCityName')) {
+      <mat-error>
+        Please enter a valid city name
+      </mat-error>
+    }
   </mat-form-field>
 
   <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onFavoriteSelected($event.option.value)">
@@ -48,7 +54,7 @@
             class="add-favorite-btn"
             (click)="addToFavorites($event, option.city)"
             matTooltip="Add to favorites"
-matTooltipPosition="after"
+            matTooltipPosition="after"
           >
             <mat-icon>favorite_border</mat-icon>
           </button>

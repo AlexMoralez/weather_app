@@ -1,0 +1,64 @@
+@if (weatherData()) {
+  <mat-card class="weather-card">
+    <mat-card-header>
+      <div class="header-content">
+        <div class="location">
+          <h2>{{ weatherData()!.cityName }}, {{ weatherData()!.country }}</h2>
+          <button
+            mat-icon-button
+            [class.favorite]="isFavorite()"
+            (click)="toggleFavorite()"
+            [matTooltip]="isFavorite() ? 'Remove from favorites' : 'Add to favorites'"
+          >
+            <mat-icon>{{ isFavorite() ? 'favorite' : 'favorite_border' }}</mat-icon>
+          </button>
+        </div>
+        <div class="timestamp">
+          Last updated: {{ formatTimestamp(weatherData()!.timestamp) }}
+        </div>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="weather-main">
+        <div class="temperature-section">
+          <div class="temperature">
+            {{ weatherData()!.temperature }}°C
+          </div>
+          <div class="feels-like">
+            Feels like {{ weatherData()!.feelsLike }}°C
+          </div>
+        </div>
+
+        <div class="weather-icon">
+          <img
+            [src]="getWeatherIconUrl(weatherData()!.icon)"
+            [alt]="weatherData()!.description"
+            class="weather-icon-img"
+          />
+          <div class="description">
+            {{ weatherData()!.description | titlecase }}
+          </div>
+        </div>
+      </div>
+
+      <div class="weather-details">
+        <div class="detail-item">
+          <mat-icon>water_drop</mat-icon>
+          <div class="detail-content">
+            <span class="label">Humidity</span>
+            <span class="value">{{ weatherData()!.humidity }}%</span>
+          </div>
+        </div>
+
+        <div class="detail-item">
+          <mat-icon>air</mat-icon>
+          <div class="detail-content">
+            <span class="label">Wind Speed</span>
+            <span class="value">{{ weatherData()!.windSpeed }} m/s</span>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+}

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, output, signal } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -61,8 +61,10 @@ export class SearchComponent {
   );
 
   // State signals
-  readonly favorites = signal<string[]>([]);
   readonly isSearching = signal(false);
+
+  // Convert favorites to signal for reactivity
+  readonly favorites = toSignal(this.favoritesService.favorites$, { initialValue: [] });
 
   // Computed filtered options
   readonly filteredOptions = computed(() => {
@@ -109,14 +111,7 @@ export class SearchComponent {
   readonly citySearch = output<string>();
 
   constructor() {
-    // Effect to sync with favorites service
-    effect(() => {
-      const favoritesSubscription = this.favoritesService.favorites$.subscribe(favorites => {
-        this.favorites.set(favorites);
-      });
-
-      return () => favoritesSubscription.unsubscribe();
-    });
+    // No manual subscription needed - using toSignal for reactive favorites
   }
 
   onSearch(): void {
