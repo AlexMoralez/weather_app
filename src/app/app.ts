@@ -1,11 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { Subject, takeUntil } from 'rxjs';
 
 import { ApiKeySetupComponent } from './components/api-key-setup/api-key-setup.component';
 import { CurrentWeatherComponent } from './components/current-weather/current-weather.component';
@@ -188,9 +187,6 @@ export class App {
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
 
-  // Destroy subject for proper subscription cleanup
-  private readonly destroy$ = new Subject<void>();
-
   // State signals
   hasApiKey = signal(false);
   currentWeather = signal<WeatherData | null>(null);
@@ -200,6 +196,26 @@ export class App {
   isLoading = toSignal(this.weatherService.loading$, { initialValue: false });
   errorMessage = toSignal(this.weatherService.error$, { initialValue: null });
 
+  // Create a method that uses takeUntilDestroyed in the injection context
+  private searchCity = (cityName: string) => {
+    return this.weatherService.getWeatherData(cityName)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ weather, forecast }) => {
+          this.currentWeather.set(weather);
+          this.forecast.set(forecast);
+
+          this.snackBar.open(`Weather data loaded for ${weather.cityName}`, 'Close', {
+            duration: 2000,
+            verticalPosition: 'top'
+          });
+        },
+        error: () => {
+          // Error handling is done in the service
+        }
+      });
+  };
+
   constructor() {
     // Check if API key exists in localStorage
     const savedApiKey = localStorage.getItem('weather-app-api-key');
@@ -207,12 +223,6 @@ export class App {
       this.weatherService.setApiKey(savedApiKey);
       this.hasApiKey.set(true);
     }
-
-    // Set up cleanup when component is destroyed
-    this.destroyRef.onDestroy(() => {
-      this.destroy$.next();
-      this.destroy$.complete();
-    });
   }
 
   onApiKeySubmitted(apiKey: string): void {
@@ -238,22 +248,8 @@ export class App {
     this.currentWeather.set(null);
     this.forecast.set(null);
 
-    this.weatherService.getWeatherData(cityName)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: ({ weather, forecast }) => {
-          this.currentWeather.set(weather);
-          this.forecast.set(forecast);
-
-          this.snackBar.open(`Weather data loaded for ${weather.cityName}`, 'Close', {
-            duration: 2000,
-            verticalPosition: 'top'
-          });
-        },
-        error: () => {
-          // Error handling is done in the service
-        }
-      });
+    // Use the helper method that has access to injection context
+    this.searchCity(cityName);
   }
 
   onFavoriteCitySelected(cityName: string): void {
