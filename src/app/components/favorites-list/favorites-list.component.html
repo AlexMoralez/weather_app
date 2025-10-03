@@ -1,0 +1,70 @@
+<div class="favorites-container">
+  <div class="favorites-header">
+    <h3>
+      <mat-icon>favorite</mat-icon>
+      Favorite Cities
+    </h3>
+    <button
+      mat-icon-button
+      (click)="refreshAllFavorites()"
+      [disabled]="isRefreshing()"
+      matTooltip="Refresh all favorites">
+      <mat-icon [class.spinning]="isRefreshing()">refresh</mat-icon>
+    </button>
+  </div>
+
+  @if (!hasNoFavorites()) {
+    <div class="favorites-grid">
+      @for (favorite of favorites(); track favorite.cityName) {
+        <mat-card class="favorite-card">
+          <mat-card-content>
+            <div class="card-header">
+              <h4 class="city-name" (click)="selectCity(favorite.cityName)">
+                {{ favorite.cityName }}
+              </h4>
+              <button
+                mat-icon-button
+                class="remove-btn"
+                (click)="removeFavorite(favorite.cityName)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            @if (favorite.state.loading) {
+              <div class="loading-content">
+                <mat-spinner diameter="24"></mat-spinner>
+                <span>Loading...</span>
+              </div>
+            } @else if (favorite.state.error) {
+              <div class="error-content">
+                <mat-icon>error</mat-icon>
+                <span>{{ favorite.state.error }}</span>
+              </div>
+            } @else if (favorite.state.data) {
+              <div class="weather-content" (click)="selectCity(favorite.cityName)">
+                <div class="temperature">
+                  {{ favorite.state.data.temperature | number:'1.0-0' }}°C
+                </div>
+                <div class="weather-info">
+                  <img
+                    class="weather-icon"
+                    [src]="getWeatherIconUrl(favorite.state.data.icon)"
+                    [alt]="favorite.state.data.description">
+                  <span class="description">
+                    {{ capitalizeText(favorite.state.data.description) }}
+                  </span>
+                </div>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  } @else {
+    <div class="no-favorites">
+      <mat-icon>favorite_border</mat-icon>
+      <h3>No Favorite Cities Yet</h3>
+      <p>Search for a city and add it to your favorites!</p>
+    </div>
+  }
+</div>

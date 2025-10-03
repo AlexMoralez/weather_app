@@ -1,0 +1,6 @@
+@if (isLoading()) {
+  <div class="loading-container">
+    <mat-spinner [diameter]="50"></mat-spinner>
+    <p class="loading-text">{{ message() || 'Loading weather data...' }}</p>
+  </div>
+}

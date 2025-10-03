@@ -1,0 +1,38 @@
+@if (forecastData() && forecastData()!.length > 0) {
+  <div class="forecast-container">
+    <h3 class="forecast-title">5-Day Forecast</h3>
+    <div class="forecast-grid">
+      @for (day of forecastData(); track day.date) {
+        <mat-card class="forecast-card">
+          <mat-card-content>
+            <div class="forecast-day">
+              <div class="date">{{ formatForecastDate(day.date) }}</div>
+
+              <div class="weather-info">
+                <img
+                  [src]="getWeatherIconUrl(day.icon)"
+                  [alt]="day.description"
+                  class="forecast-icon"
+                />
+
+                <div class="temperatures">
+                  <span class="temp-high">{{ day.tempHigh }}°</span>
+                  <span class="temp-low">{{ day.tempLow }}°</span>
+                </div>
+              </div>
+
+              <div class="description">
+                {{ capitalizeWords(day.description) }}
+              </div>
+
+              <div class="humidity">
+                <mat-icon class="humidity-icon">water_drop</mat-icon>
+                <span>{{ day.humidity }}%</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  </div>
+}

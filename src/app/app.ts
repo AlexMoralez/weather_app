@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { Subscription } from 'rxjs';
 
 import { ApiKeySetupComponent } from './components/api-key-setup/api-key-setup.component';
 import { CurrentWeatherComponent } from './components/current-weather/current-weather.component';
@@ -38,7 +40,6 @@ import { WeatherService } from './services/weather.service';
 
       <main class="main-content">
         @if (!hasApiKey()) {
-          <!-- API Key Setup -->
           <app-api-key-setup (apiKeySubmitted)="onApiKeySubmitted($event)" />
         } @else {
           <!-- Weather Application -->
@@ -182,16 +183,19 @@ import { WeatherService } from './services/weather.service';
     ApiKeySetupComponent
   ]
 })
-export class App {
+export class App implements OnDestroy {
   private readonly weatherService = inject(WeatherService);
   private readonly snackBar = inject(MatSnackBar);
+  private subscriptions = new Subscription();
 
   // State signals
   hasApiKey = signal(false);
-  isLoading = signal(false);
-  errorMessage = signal<string | null>(null);
   currentWeather = signal<WeatherData | null>(null);
   forecast = signal<ForecastData[] | null>(null);
+
+  // Convert observables to signals for better performance
+  isLoading = toSignal(this.weatherService.loading$, { initialValue: false });
+  errorMessage = toSignal(this.weatherService.error$, { initialValue: null });
 
   constructor() {
     // Check if API key exists in localStorage
@@ -200,15 +204,10 @@ export class App {
       this.weatherService.setApiKey(savedApiKey);
       this.hasApiKey.set(true);
     }
+  }
 
-    // Subscribe to weather service state
-    this.weatherService.loading$.subscribe(loading => {
-      this.isLoading.set(loading);
-    });
-
-    this.weatherService.error$.subscribe(error => {
-      this.errorMessage.set(error);
-    });
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   onApiKeySubmitted(apiKey: string): void {
@@ -230,11 +229,11 @@ export class App {
   }
 
   onCitySearch(cityName: string): void {
-    this.errorMessage.set(null);
+    // Clear previous data
     this.currentWeather.set(null);
     this.forecast.set(null);
 
-    this.weatherService.getWeatherData(cityName).subscribe({
+    const subscription = this.weatherService.getWeatherData(cityName).subscribe({
       next: ({ weather, forecast }) => {
         this.currentWeather.set(weather);
         this.forecast.set(forecast);
@@ -248,6 +247,8 @@ export class App {
         // Error handling is done in the service
       }
     });
+
+    this.subscriptions.add(subscription);
   }
 
   onFavoriteCitySelected(cityName: string): void {
@@ -260,7 +261,6 @@ export class App {
     this.hasApiKey.set(false);
     this.currentWeather.set(null);
     this.forecast.set(null);
-    this.errorMessage.set(null);
     this.weatherService.clearCache();
 
     this.snackBar.open('API key cleared', 'Close', {

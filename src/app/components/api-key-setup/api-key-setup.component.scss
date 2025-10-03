@@ -1,0 +1,142 @@
+.setup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 16px;
+}
+
+.setup-card {
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-primary-dark, #15719f);
+
+    mat-icon {
+      color: var(--color-secondary, #528ab4);
+    }
+  }
+
+  mat-card-subtitle {
+    color: rgba(0, 0, 0, 0.6);
+    font-size: 14px;
+    margin-top: 8px;
+  }
+}
+
+.instructions {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: rgba(98, 161, 199, 0.05);
+  border: 1px solid rgba(98, 161, 199, 0.2);
+  border-radius: 8px;
+
+  p {
+    margin: 0 0 12px 0;
+    font-weight: 500;
+    color: var(--color-primary-dark, #15719f);
+  }
+
+  ol {
+    margin: 0;
+    padding-left: 20px;
+
+    li {
+      margin-bottom: 8px;
+      line-height: 1.4;
+
+      strong {
+        color: #e65100;
+        font-weight: 600;
+      }
+    }
+  }
+
+  a {
+    color: var(--color-primary-dark, #15719f);
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.api-key-field {
+  width: 100%;
+  margin-bottom: 16px;
+
+  .mat-mdc-form-field-subscript-wrapper {
+    margin-top: 8px;
+  }
+
+  input {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+  }
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background-color: rgba(33, 150, 243, 0.1);
+  border-radius: 4px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: #2196f3;
+  }
+
+  span {
+    font-style: italic;
+  }
+}
+
+mat-card-actions {
+  padding: 16px 24px 24px;
+
+  button {
+    min-width: 120px;
+    border-radius: 8px;
+  }
+}
+
+// Responsive design
+@media (max-width: 600px) {
+  .setup-container {
+    padding: 8px;
+    min-height: 50vh;
+  }
+
+  .setup-card {
+    max-width: none;
+  }
+
+  .instructions {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .setup-container {
+    padding: 4px;
+  }
+
+  .instructions ol {
+    padding-left: 16px;
+  }
+}
