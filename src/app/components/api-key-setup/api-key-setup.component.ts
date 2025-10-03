@@ -40,7 +40,7 @@ export class ApiKeySetupComponent {
   apiKeyStatus = toSignal(this.apiKeyControl.statusChanges, { initialValue: 'INVALID' });
 
   // Computed properties for reactive UI
-  isSubmitDisabled = computed(() => this.apiKeyControl.invalid);
+  isSubmitDisabled = computed(() => this.apiKeyStatus() === 'INVALID');
   // Output events
   apiKeySubmitted = output<string>();
 

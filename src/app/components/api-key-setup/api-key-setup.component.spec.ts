@@ -58,6 +58,7 @@ describe('ApiKeySetupComponent', () => {
 
   it('should enable submit button when form is valid', () => {
     component.apiKeyControl.setValue('validapikeytest1234567890123456');
+    fixture.detectChanges(); // Trigger change detection to update computed signals
     expect(component.isSubmitDisabled()).toBe(false);
   });
 

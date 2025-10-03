@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { Subscription } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 
 import { ApiKeySetupComponent } from './components/api-key-setup/api-key-setup.component';
 import { CurrentWeatherComponent } from './components/current-weather/current-weather.component';
@@ -183,10 +183,13 @@ import { WeatherService } from './services/weather.service';
     ApiKeySetupComponent
   ]
 })
-export class App implements OnDestroy {
+export class App {
   private readonly weatherService = inject(WeatherService);
   private readonly snackBar = inject(MatSnackBar);
-  private subscriptions = new Subscription();
+  private readonly destroyRef = inject(DestroyRef);
+
+  // Destroy subject for proper subscription cleanup
+  private readonly destroy$ = new Subject<void>();
 
   // State signals
   hasApiKey = signal(false);
@@ -204,10 +207,12 @@ export class App implements OnDestroy {
       this.weatherService.setApiKey(savedApiKey);
       this.hasApiKey.set(true);
     }
-  }
 
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
+    // Set up cleanup when component is destroyed
+    this.destroyRef.onDestroy(() => {
+      this.destroy$.next();
+      this.destroy$.complete();
+    });
   }
 
   onApiKeySubmitted(apiKey: string): void {
@@ -233,22 +238,22 @@ export class App implements OnDestroy {
     this.currentWeather.set(null);
     this.forecast.set(null);
 
-    const subscription = this.weatherService.getWeatherData(cityName).subscribe({
-      next: ({ weather, forecast }) => {
-        this.currentWeather.set(weather);
-        this.forecast.set(forecast);
+    this.weatherService.getWeatherData(cityName)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: ({ weather, forecast }) => {
+          this.currentWeather.set(weather);
+          this.forecast.set(forecast);
 
-        this.snackBar.open(`Weather data loaded for ${weather.cityName}`, 'Close', {
-          duration: 2000,
-          verticalPosition: 'top'
-        });
-      },
-      error: () => {
-        // Error handling is done in the service
-      }
-    });
-
-    this.subscriptions.add(subscription);
+          this.snackBar.open(`Weather data loaded for ${weather.cityName}`, 'Close', {
+            duration: 2000,
+            verticalPosition: 'top'
+          });
+        },
+        error: () => {
+          // Error handling is done in the service
+        }
+      });
   }
 
   onFavoriteCitySelected(cityName: string): void {
